@@ -1,11 +1,16 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from utils.functions import load_json
-from users import User
+from routers.users import User
+from routers import products, users
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
-users = load_json()
+# Routers
+app.include_router(products.router)
+app.include_router(users.router)
+app.mount('/static', StaticFiles(directory="static"), name="static")
+
 
 @app.get('/')
 async def main():
@@ -14,15 +19,15 @@ async def main():
         "message": "Pagina principal"
     }
 
-@app.get('/users/{id}')
-async def getUser(id: int):
-        for user in users:
-            if user['id'] == id:
-                return user 
-        return JSONResponse(
-                status_code=404,
-                content={"message": f"the user with id {id} was not found"}
-        )
+# @app.get('/users/{id}')
+# async def getUser(id: int):
+#         for user in users:
+#             if user['id'] == id:
+#                 return user 
+#         return JSONResponse(
+#                 status_code=404,
+#                 content={"message": f"the user with id {id} was not found"}
+#         )
   
 # @app.post('user')
 # def create(user: User):

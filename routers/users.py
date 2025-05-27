@@ -1,33 +1,21 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
+from models.user import User
+from data.users_list import users_list
 
-app = FastAPI()
+router = APIRouter()
 
-class User(BaseModel):
-    id:int
-    name: str
-    surname: str
-    email: str
-    age: int
-
-users_list = [
-    User(id=1, name="Helger", surname="Santiago", email="helgersantiago22@gmail.com", age=22),
-    User(id=2, name="Carlos", surname="Santiago", email="helgersantiago22@gmail.com", age=22),
-    User(id=3, name="Brayan", surname="Santiago", email="helgersantiago22@gmail.com", age=22),
-    ] 
-
-@app.get('/users')
+@router.get('/users')
 async def getUsers():
     return users_list
 
 # Path
-@app.get('/user/{id}')
+@router.get('/user/{id}')
 async def getUser(id: int):
     return search_user(id)
 
 # Query
 # http://127.0.0.1:8000/userquery?id=3
-@app.get('/userquery')
+@router.get('/userquery')
 async def user(id: int):
     return search_user(id)
     
@@ -38,19 +26,16 @@ def search_user(id: int):
     except:
         return {"error": "No se encontro el usuario."}
 
-@app.post('/user', status_code=201)
+@router.post('/user', response_model=User, status_code=201)
 async def user(user: User):
     if type(search_user(user.id)) == User:
         raise HTTPException(status_code=204, detail="El usuario ya existe.")
-        
     else: 
-        users_list.append(user)
-        return {
-                "message": "Usuario creado correctamente",
-                "user": user
-            }
+        users_list.routerend(user)
+        return user
+            
     
-@app.put('/user')
+@router.put('/user')
 async def updateUser(user: User):
     
     found: bool = False
@@ -61,14 +46,14 @@ async def updateUser(user: User):
             found = True
             
     if not found:
-        return {"error": "No se ha encontrado el usuario."}
+        raise HTTPException(status_code=404, detail="No se ha encontrado el usuario")
     else:
         return {
             "message": "usuario actualizado correctamente",
             "user": user
         }
 
-@app.delete('/user/{id}')
+@router.delete('/user/{id}')
 async def deleteUser(id: int):
     for index, user in enumerate(users_list):
         if user.id == id:
